@@ -276,6 +276,10 @@ function createUser($db, $data) {
 }
 
 /**
+ * 
+ * Method: PUT
+ */
+/**
  * Function: Update an existing user.
  * Method: PUT
  */
@@ -283,34 +287,55 @@ function updateUser($db, $data) {
 
     // TODO: Check that id is present in $data.
     if (empty($data['id'])) {
-
         sendResponse("User id is required", 400);
     }
 
     // TODO: Look up the user by id.
     $checkSql = "SELECT id FROM users WHERE id = :id";
-
     $checkStmt = $db->prepare($checkSql);
-
     $checkStmt->execute([
         ':id' => $data['id']
     ]);
 
     if (!$checkStmt->fetch()) {
-
         sendResponse("User not found", 404);
     }
 
-    // TODO: Validate email if provided.
-    if (!empty($data['email'])) {
-
-        if (!validateEmail($data['email'])) {
-
-            sendResponse("Invalid email format", 400);
-        }
+    // TODO: Check required update fields.
+    if (
+        empty($data['name']) ||
+        empty($data['email']) ||
+        !isset($data['is_admin'])
+    ) {
+        sendResponse("Name, email, and admin status are required", 400);
     }
 
-    // TODO: Build update query.
+    // TODO: Sanitize and validate inputs.
+    $name = sanitizeInput($data['name']);
+    $email = trim($data['email']);
+    $isAdmin = $data['is_admin'] == 1 ? 1 : 0;
+
+    if (!validateEmail($email)) {
+        sendResponse("Invalid email format", 400);
+    }
+
+    // TODO: If email is being updated, check it is not already used by another user.
+    $duplicateSql = "SELECT id FROM users
+                     WHERE email = :email
+                     AND id != :id";
+
+    $duplicateStmt = $db->prepare($duplicateSql);
+
+    $duplicateStmt->execute([
+        ':email' => $email,
+        ':id' => $data['id']
+    ]);
+
+    if ($duplicateStmt->fetch()) {
+        sendResponse("Email already exists", 409);
+    }
+
+    // TODO: Prepare the UPDATE statement, bind parameters, and execute.
     $sql = "UPDATE users
             SET name = :name,
                 email = :email,
@@ -320,19 +345,16 @@ function updateUser($db, $data) {
     $stmt = $db->prepare($sql);
 
     $success = $stmt->execute([
-        ':name' => sanitizeInput($data['name']),
-        ':email' => trim($data['email']),
-        ':is_admin' => isset($data['is_admin']) && $data['is_admin'] == 1 ? 1 : 0,
+        ':name' => $name,
+        ':email' => $email,
+        ':is_admin' => $isAdmin,
         ':id' => $data['id']
     ]);
 
-    // TODO: Return response.
+    // TODO: If successful, call sendResponse() with HTTP 200.
     if ($success) {
-
         sendResponse("User updated successfully", 200);
-
     } else {
-
         sendResponse("Failed to update user", 500);
     }
 }

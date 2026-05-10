@@ -262,10 +262,10 @@ function handleSort(event) {
   if (columnIndex === 1) property = "email";
   if (columnIndex === 2) property = "is_admin";
 
-  let direction = event.currentTarget.dataset.sortDir || "asc";
+ let direction = event.currentTarget.dataset.sortDir || "desc";
 
-  direction = direction === "asc" ? "desc" : "asc";
-
+direction = direction === "asc" ? "desc" : "asc";
+  
   event.currentTarget.dataset.sortDir = direction;
 
   users.sort((a, b) => {

@@ -83,6 +83,9 @@ async function handleChangePassword(event) {
     alert("Password must be at least 8 characters.");
     return;
   }
+  document.getElementById("current-password").value = "";
+document.getElementById("new-password").value = "";
+document.getElementById("confirm-password").value = "";
 
   const user = typeof localStorage !== "undefined"
   ? JSON.parse(localStorage.getItem("user"))
